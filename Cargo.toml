@@ -1,0 +1,21 @@
+[package]
+name = "bevy_egui_learning"
+version = "0.1.0"
+edition = "2021"
+
+#DAMN THE EXECUTABLES ARE LARGE
+#like, who knew using a whole ass game engine would produce some chonker sized executables
+[profile.release]
+opt-level = 3
+debug = false
+incremental = false
+lto = true          # Enable link-time optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*
+
+
+[dependencies]
+bevy = { version = "0.14", features = ["wayland"] }
+bevy_egui = "0.29"
+rand = "0.8.5"
