@@ -106,8 +106,10 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
             let biomorph = &matrix.biomorphs[i];
             //TODO  write offset to render each biomorph in its own little compartment
             let offset = Vec2::new(
-                ((i % config.columns) as f32 - 1.0) * cell_size.x,
-                (i.div_ceil(config.rows) as f32 - 2.0) * cell_size.y,
+                ((i % config.columns) as f32 - (if config.columns % 2 == 0 { 0.5 } else { 1.0 }))
+                    * cell_size.x,
+                (i.div_ceil(config.rows) as f32 - (if config.rows % 2 == 0 { 1.5 } else { 2.0 }))
+                    * cell_size.y,
             );
             /* let offset = Vec2::ZERO; */
 
