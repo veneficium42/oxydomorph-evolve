@@ -1,13 +1,4 @@
-use std::mem::offset_of;
-
-use bevy::{
-    color::palettes::css::{RED, WHITE},
-    gizmos::config,
-    math::VectorSpace,
-    prelude::*,
-    render::render_resource::encase::matrix,
-    window::WindowResolution,
-};
+use bevy::{color::palettes::css::*, prelude::*};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
 mod biomorph;
@@ -86,32 +77,30 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
     let config = &biomorph_state.config;
     let matrix = &biomorph_state.matrix;
 
+    let grid = UVec2::new(config.columns as u32, config.rows as u32);
+
     let cell_size = Vec2::new(
-        resolution.width() / (config.columns as f32),
-        resolution.height() / (config.rows as f32),
+        resolution.width() / (grid.x as f32),
+        resolution.height() / (grid.y as f32),
     );
 
     gizmos
-        .grid_2d(
-            Vec2::ZERO,
-            0.0,
-            UVec2::new(config.columns as u32, config.rows as u32),
-            cell_size,
-            WHITE,
-        )
+        .grid_2d(Vec2::ZERO, 0.0, grid, cell_size, WHITE)
         .outer_edges();
 
     if biomorph_state.is_generated {
-        for i in 0..(config.columns * config.rows) {
-            let biomorph = &matrix.biomorphs[i];
+        for i in 0..(grid.x * grid.y) {
+            let biomorph = &matrix.biomorphs[i as usize];
             //TODO  write offset to render each biomorph in its own little compartment
-            let offset = Vec2::new(
-                ((i % config.columns) as f32 - (if config.columns % 2 == 0 { 0.5 } else { 1.0 }))
-                    * cell_size.x,
-                (i.div_ceil(config.rows) as f32 - (if config.rows % 2 == 0 { 1.5 } else { 2.0 }))
-                    * cell_size.y,
+            let cell_cord = UVec2::new(
+                (i % grid.x) as u32,
+                // i = x + y*xmax
+                ((i - (i % grid.x)) / grid.x) as u32,
             );
-            /* let offset = Vec2::ZERO; */
+
+            let relative_offset = cell_cord.as_vec2() - ((grid - UVec2::ONE).as_vec2() * 0.5);
+
+            let offset = relative_offset * cell_size;
 
             let (min, max) = biomorph.bounding_box();
             let size = max - min;
