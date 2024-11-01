@@ -38,6 +38,7 @@ struct BiomorphState {
 }
 
 fn ui_system(mut biomorph_state: ResMut<BiomorphState>, mut contexts: EguiContexts) {
+    let n_biomorphs = &biomorph_state.config.rows * &biomorph_state.config.columns;
     egui::Window::new("Configuration").show(contexts.ctx_mut(), |ui| {
         ui.add_enabled_ui(!biomorph_state.is_generated, |ui| {
             ui.horizontal(|ui| {
@@ -59,7 +60,7 @@ fn ui_system(mut biomorph_state: ResMut<BiomorphState>, mut contexts: EguiContex
                 biomorph_state.matrix = Matrix::initial_setup(&biomorph_state.config);
                 /*                 biomorph_state.matrix.develop(0);
                  */
-                for i in 0..(&biomorph_state.config.rows * &biomorph_state.config.columns) {
+                for i in 0..n_biomorphs {
                     biomorph_state.matrix.develop(i);
                 }
                 biomorph_state.is_generated = true;
@@ -67,6 +68,13 @@ fn ui_system(mut biomorph_state: ResMut<BiomorphState>, mut contexts: EguiContex
 
             if ui.add(egui::Button::new("Reset")).clicked() {
                 *biomorph_state = BiomorphState::default();
+            }
+
+            if ui
+                .add_enabled(biomorph_state.is_generated, egui::Button::new("Develop"))
+                .clicked()
+            {
+                biomorph_state.matrix.reproduce(0);
             }
         });
     });

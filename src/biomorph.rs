@@ -68,9 +68,18 @@ impl Matrix {
     pub fn develop(&mut self, biomorph_index: usize) {
         self.biomorphs[biomorph_index].develop(0, 0, 2, self.dx, self.dy);
     }
+
+    pub fn reproduce(&mut self, biomorph_index: usize) {
+        let biomorph = self.biomorphs[biomorph_index].clone();
+        for i in 0..self.biomorphs.len() {
+            self.biomorphs[i] = biomorph.reproduce();
+            self.biomorphs[i].develop(0, 0, 2, self.dx, self.dy);
+        }
+    }
 }
 
 /// Definition for the data that a biomorph has
+#[derive(Clone)]
 pub struct Biomorph {
     pub genes: [i32; 9],
     pub segment_list: Vec<Segment>,
@@ -193,6 +202,7 @@ impl Biomorph {
 }
 
 /// Definition of a segment, every biomorph has a set of segments and they are rendered one by one
+#[derive(Clone)]
 pub struct Segment {
     pub start: IVec3,
     pub end: IVec3,
