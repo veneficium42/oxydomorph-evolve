@@ -99,7 +99,7 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
     if biomorph_state.is_generated {
         for i in 0..(grid.x * grid.y) {
             let biomorph = &matrix.biomorphs[i as usize];
-            //TODO  write offset to render each biomorph in its own little compartment
+
             let cell_cord = UVec2::new(
                 (i % grid.x) as u32,
                 // i = x + y*xmax
@@ -114,11 +114,7 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
             let size = max - min;
             let center = biomorph.center();
 
-            //TODO: resize biomorphs so they fit into their own lil space :3
-
             let scale = cell_size / size.xy() * 0.9;
-
-            //gizmos.rect_2d(Vec2::ZERO + offset, 0.0, size.xy() * scale, RED);
 
             for segment in &biomorph.segment_list {
                 gizmos.line_2d(
