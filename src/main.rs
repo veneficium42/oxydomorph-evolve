@@ -103,7 +103,7 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
             let cell_cord = UVec2::new(
                 (i % grid.x) as u32,
                 // i = x + y*xmax
-                ((i - (i % grid.x)) / grid.x) as u32,
+                (i / grid.x) as u32,
             );
 
             let relative_offset = cell_cord.as_vec2() - ((grid - UVec2::ONE).as_vec2() * 0.5);
