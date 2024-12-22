@@ -15,10 +15,9 @@ fn main() {
         }))
         .add_plugins(EguiPlugin)
         .init_resource::<BiomorphState>()
+        .init_resource::<BiomorphMatrix>()
         .init_gizmo_group::<GizmoConfig>()
         .add_systems(Startup, setup)
-        // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
-        // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
         .add_systems(Update, (ui_system, update))
         .run();
 }
@@ -33,12 +32,23 @@ fn setup(mut commands: Commands) {
 #[derive(Default, Resource)]
 struct BiomorphState {
     config: Config,
-    matrix: Matrix,
     is_generated: bool,
+    generation_counter: u32,
+    selected_biomorph: usize,
 }
 
-fn ui_system(mut biomorph_state: ResMut<BiomorphState>, mut contexts: EguiContexts) {
+#[derive(Default, Resource)]
+struct BiomorphMatrix {
+    matrix: Matrix,
+}
+
+fn ui_system(
+    mut biomorph_state: ResMut<BiomorphState>,
+    mut biomorph_matrix: ResMut<BiomorphMatrix>,
+    mut contexts: EguiContexts,
+) {
     let n_biomorphs = &biomorph_state.config.rows * &biomorph_state.config.columns;
+
     egui::Window::new("Configuration").show(contexts.ctx_mut(), |ui| {
         ui.add_enabled_ui(!biomorph_state.is_generated, |ui| {
             ui.horizontal(|ui| {
@@ -57,33 +67,47 @@ fn ui_system(mut biomorph_state: ResMut<BiomorphState>, mut contexts: EguiContex
                 .add_enabled(!biomorph_state.is_generated, egui::Button::new("Generate"))
                 .clicked()
             {
-                biomorph_state.matrix = Matrix::initial_setup(&biomorph_state.config);
-                /*                 biomorph_state.matrix.develop(0);
-                 */
+                biomorph_matrix.matrix = Matrix::initial_setup(&biomorph_state.config);
                 for i in 0..n_biomorphs {
-                    biomorph_state.matrix.develop(i);
+                    biomorph_matrix.matrix.develop(i);
                 }
                 biomorph_state.is_generated = true;
             }
 
             if ui.add(egui::Button::new("Reset")).clicked() {
                 *biomorph_state = BiomorphState::default();
+                biomorph_matrix.matrix = Matrix::default();
             }
 
             if ui
                 .add_enabled(biomorph_state.is_generated, egui::Button::new("Develop"))
                 .clicked()
             {
-                biomorph_state.matrix.reproduce(0);
+                biomorph_matrix
+                    .matrix
+                    .reproduce(biomorph_state.selected_biomorph);
+                biomorph_state.generation_counter += 1;
             }
         });
+        ui.add_enabled(
+            biomorph_state.is_generated,
+            egui::Slider::new(&mut biomorph_state.selected_biomorph, 0..=(n_biomorphs - 1)),
+        );
+
+        ui.label(format!("Generation: {}", biomorph_state.generation_counter));
     });
 }
 
-fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query<&Window>) {
+fn update(
+    mut commands: Commands,
+    biomorph_state: Res<BiomorphState>,
+    biomorph_matrix: Res<BiomorphMatrix>,
+    mut gizmos: Gizmos,
+    windows: Query<&Window>,
+) {
     let resolution = &windows.single().resolution;
     let config = &biomorph_state.config;
-    let matrix = &biomorph_state.matrix;
+    let matrix = &biomorph_matrix.matrix;
 
     let grid = UVec2::new(config.columns as u32, config.rows as u32);
 
@@ -106,6 +130,7 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
                 (i / grid.x) as u32,
             );
 
+            //this describes how many cells this must be moved from the center
             let relative_offset = cell_cord.as_vec2() - ((grid - UVec2::ONE).as_vec2() * 0.5);
 
             let offset = relative_offset * cell_size;
@@ -122,6 +147,9 @@ fn update(biomorph_state: Res<BiomorphState>, mut gizmos: Gizmos, windows: Query
                     ((segment.end.xy().as_vec2() - center.xy()) * scale) + offset,
                     WHITE,
                 );
+            }
+            if i == biomorph_state.selected_biomorph as u32 {
+                gizmos.rect_2d(offset, 0., cell_size, RED);
             }
         }
     }
