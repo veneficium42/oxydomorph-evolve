@@ -11,7 +11,7 @@ const fn genome() -> [(i32, i32); 9] {
     genome
 }
 
-const MAX_SEGMENTS: usize = 1024;
+const INITAL_SEG_LIST_SIZE: usize = 768;
 
 /// Configuration passed down from the GUI
 pub struct Config {
@@ -95,7 +95,7 @@ impl Biomorph {
 
         genes[8] = rand::thread_rng().gen_range((genome[7].1 - 3)..(genome[7].1 + 1));
 
-        let segment_list: Vec<Segment> = Vec::with_capacity(MAX_SEGMENTS);
+        let segment_list: Vec<Segment> = Vec::with_capacity(INITAL_SEG_LIST_SIZE);
 
         Biomorph {
             genes,
@@ -120,7 +120,7 @@ impl Biomorph {
             genes[i] = genome[i].1 - 1;
         }
 
-        let segment_list: Vec<Segment> = Vec::with_capacity(MAX_SEGMENTS);
+        let segment_list: Vec<Segment> = Vec::with_capacity(INITAL_SEG_LIST_SIZE);
 
         Biomorph {
             genes,
@@ -174,7 +174,7 @@ impl Biomorph {
 
     fn develop(&mut self, start_x: i32, start_y: i32, start_dir: i32, dx: [i32; 9], dy: [i32; 9]) {
         if self.segment_list.len() > 1 {
-            self.segment_list = Vec::with_capacity(MAX_SEGMENTS);
+            self.segment_list = Vec::with_capacity(INITAL_SEG_LIST_SIZE);
         }
 
         let (order, new_dx, new_dy) = Biomorph::plugin(self.genes, dx, dy);
